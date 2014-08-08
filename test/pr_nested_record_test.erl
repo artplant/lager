@@ -2,13 +2,12 @@
 
 -compile([{parse_transform, lager_transform}]).
 
+-ifdef(TEST).
+
 -record(a, {field1, field2}).
 -record(b, {field1, field2}).
 
-
--ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
--endif.
 
 nested_record_test() ->
     A = #a{field1 = x, field2 = y}, 
@@ -19,3 +18,4 @@ nested_record_test() ->
                                     [{field1, x},{field2, y}]}},
                      {field2, {}}]}, 
                    Pr_B).
+-endif.
