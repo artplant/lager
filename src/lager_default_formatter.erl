@@ -114,8 +114,22 @@ output_color(Msg,Colors) ->
 -spec make_printable(any()) -> iolist().
 make_printable(A) when is_atom(A) -> atom_to_list(A);
 make_printable(P) when is_pid(P) -> pid_to_list(P);
-make_printable(L) when is_list(L) orelse is_binary(L) -> L; 
-make_printable(Other) -> io_lib:format("~p",[Other]).
+make_printable(B) when is_binary(B) -> [B];
+make_printable(L) when is_list(L) ->
+    case is_iolist(L) of
+        true -> L;
+        false -> io_lib:print(L)
+    end;
+make_printable(Other) -> io_lib:print(Other).
+
+is_iolist(L) ->
+    try
+        iolist_size(L),
+        true
+    catch
+        error:badarg ->
+            false
+    end.
 
 get_metadata(Key, Metadata) ->
     get_metadata(Key, Metadata, undefined).
