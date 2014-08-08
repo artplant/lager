@@ -59,13 +59,9 @@ format(Msg,[], Colors) ->
 format(Msg,[{eol, EOL}], Colors) ->
     format(Msg,
         [date, " ", time, " ", color, "[", severity, "] ",
-            {pid, ""},
-            {module, [
-                    {pid, ["@"], ""},
-                    module,
-                    {function, [":", function], ""},
-                    {line, [":",line], ""}], ""},
-            " ", message, EOL], Colors);
+            {pid, [pid, " "], ""},
+            {caption, [caption, ": "], ""},
+            message, EOL], Colors);
 format(Message,Config,Colors) ->
     [ case V of
         color -> output_color(Message,Colors);

@@ -35,7 +35,7 @@
 -endif.
 
 -include("lager.hrl").
--define(TERSE_FORMAT,[time, " ", color, "[", severity,"] ", message]).
+-define(TERSE_FORMAT,[time, " [", severity, "] ", {caption, [caption, ": "], ""}, message]).
 
 %% @private
 init([Level, true]) -> % for backwards compatibility
