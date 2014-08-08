@@ -25,7 +25,7 @@
 %% API
 -export([start/0,
         log/3, log/4,
-        md/0, md/1,
+        md/0, md/1, umd/2,
         trace/2, trace/3, trace_file/2, trace_file/3, trace_file/4, trace_console/1, trace_console/2,
         clear_all_traces/0, stop_trace/1, status/0, 
         get_loglevel/1, set_loglevel/2, set_loglevel/3, get_loglevels/0,
@@ -80,6 +80,9 @@ md(NewMD) when is_list(NewMD) ->
     end;
 md(_) ->
     erlang:error(badarg).
+
+umd(Key, Value) ->
+    md(lists:keystore(Key, 1, md(), {Key, Value})).
 
 -spec dispatch_log(log_level(), list(), string(), list() | none, pos_integer()) ->  ok | {error, lager_not_running}.
 %% this is the same check that the parse transform bakes into the module at compile time
