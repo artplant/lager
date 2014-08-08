@@ -31,7 +31,8 @@
         get_loglevel/1, set_loglevel/2, set_loglevel/3, get_loglevels/0,
         update_loglevel_config/0, posix_error/1,
         safe_format/3, safe_format_chop/3, dispatch_log/5, dispatch_log/9, 
-        do_log/9, pr/2]).
+        do_log/9, pr/2,
+        format_exception/1, format_exception/2]).
 
 -type log_level() :: debug | info | notice | warning | error | critical | alert | emergency.
 -type log_level_number() :: 0..7.
@@ -415,4 +416,17 @@ is_record_known(Record, Module) ->
                         true -> {Name, RecordFields}
                     end
             end
+    end.
+
+format_exception(Error) ->
+    Stacktrace = erlang:get_stacktrace(),
+    format_exception(Error, Stacktrace).
+
+format_exception(Error, Stacktrace) ->
+    FormatError = error_logger_lager_h:format_reason({Error, Stacktrace}),
+    PF = fun(Term, I) -> io_lib:print(Term, I, 80, 5) end,
+    SF = fun(_M, _F, _A) -> false end,
+    case lib:format_stacktrace(3, Stacktrace, SF, PF) of
+        [] -> FormatError;
+        Stack -> [FormatError, $\n, Stack]
     end.
