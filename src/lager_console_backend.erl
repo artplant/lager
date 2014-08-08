@@ -139,7 +139,7 @@ is_new_style_console_available() ->
     %%    'user_drv' is a registered proc name used by the "new"
     %%    console driver.
     init:get_argument(noshell) /= error orelse
-        element(1, os:type()) /= win32 orelse
+        element(1, os:type()) == win32 orelse
         is_pid(whereis(user_drv)).
 -endif.
 
