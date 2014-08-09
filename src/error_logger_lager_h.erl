@@ -31,7 +31,7 @@
 -export([init/1, handle_call/2, handle_event/2, handle_info/2, terminate/2,
         code_change/3]).
 
--export([format_reason/1]).
+-export([format_reason/1, format_reason_verbose/1]).
 
 -record(state, {
         %% how many messages per second we try to deliver

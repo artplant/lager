@@ -423,10 +423,4 @@ format_exception(Error) ->
     format_exception(Error, Stacktrace).
 
 format_exception(Error, Stacktrace) ->
-    FormatError = error_logger_lager_h:format_reason({Error, Stacktrace}),
-    PF = fun(Term, I) -> io_lib:print(Term, I, 80, 5) end,
-    SF = fun(_M, _F, _A) -> false end,
-    case lib:format_stacktrace(3, Stacktrace, SF, PF) of
-        [] -> FormatError;
-        Stack -> [FormatError, $\n, Stack]
-    end.
+    error_logger_lager_h:format_reason_verbose({Error, Stacktrace}).
