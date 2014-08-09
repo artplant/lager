@@ -154,19 +154,19 @@ log_event(Event, State) ->
                     [Name, _Msg, _State, Reason] = Args,
                     ?CRASH_LOG(Event),
                     ?LOGFMT(error, Pid, "gen_server ~w terminated with reason: ~s",
-                        [Name, format_reason(Reason)]);
+                        [Name, format_reason_verbose(Reason)]);
                 "** State machine "++_ ->
                     %% gen_fsm terminate
                     [Name, _Msg, StateName, _StateData, Reason] = Args,
                     ?CRASH_LOG(Event),
                     ?LOGFMT(error, Pid, "gen_fsm ~w in state ~w terminated with reason: ~s",
-                        [Name, StateName, format_reason(Reason)]);
+                        [Name, StateName, format_reason_verbose(Reason)]);
                 "** gen_event handler"++_ ->
                     %% gen_event handler terminate
                     [ID, Name, _Msg, _State, Reason] = Args,
                     ?CRASH_LOG(Event),
                     ?LOGFMT(error, Pid, "gen_event ~w installed in ~w terminated with reason: ~s",
-                        [ID, Name, format_reason(Reason)]);
+                        [ID, Name, format_reason_verbose(Reason)]);
                 "** Cowboy handler"++_ ->
                     %% Cowboy HTTP server error
                     ?CRASH_LOG(Event),
@@ -260,7 +260,7 @@ format_crash_report(Report, Neighbours) ->
         Atom -> Atom
     end,
     {Class, Reason, Trace} = get_value(error_info, Report),
-    ReasonStr = format_reason({Reason, Trace}),
+    ReasonStr = format_reason_verbose({Reason, Trace}),
     Type = case Class of
         exit -> "exited";
         _ -> "crashed"
@@ -360,6 +360,40 @@ format_reason(Reason) ->
     {Str, _} = lager_trunc_io:print(Reason, 500),
     Str.
 
+format_reason_verbose({'function not exported', [MFA|_] = StackTrace}) ->
+    ["call to undefined function ", format_mfa(MFA), format_stacktrace(StackTrace)];
+format_reason_verbose({undef, [MFA|_] = StackTrace}) ->
+    ["call to undefined function ", format_mfa(MFA), format_stacktrace(StackTrace)];
+format_reason_verbose({{badrecord, Record}, [_MFA|_] = StackTrace}) ->
+    ["bad record ", print_val(Record), format_stacktrace(StackTrace)];
+format_reason_verbose({{case_clause, Val}, [_MFA|_] = StackTrace}) ->
+    ["no case clause matching ", print_val(Val), format_stacktrace(StackTrace)];
+format_reason_verbose({function_clause, [MFA|_] = StackTrace}) ->
+    ["no function clause matching ", format_mfa(MFA), format_stacktrace(StackTrace)];
+format_reason_verbose({if_clause, [_MFA|_] = StackTrace}) ->
+    ["no true branch found while evaluating if expression", format_stacktrace(StackTrace)];
+format_reason_verbose({{try_clause, Val}, [_MFA|_] = StackTrace}) ->
+    ["no try clause matching ", print_val(Val), format_stacktrace(StackTrace)]; 
+format_reason_verbose({badarith, [_MFA|_] = StackTrace}) ->
+    ["bad arithmetic expression", format_stacktrace(StackTrace)];
+format_reason_verbose({{badmatch, Val}, [_MFA|_] = StackTrace}) ->
+    ["no match of right hand value ", print_val(Val), format_stacktrace(StackTrace)];
+format_reason_verbose({badarg, [_MFA|_] = StackTrace}) ->
+    ["bad argument", format_stacktrace(StackTrace)];
+format_reason_verbose({{badarity, {Fun, Args}}, [_MFA|_] = StackTrace}) ->
+    {arity, Arity} = lists:keyfind(arity, 1, erlang:fun_info(Fun)),
+    [io_lib:format("fun called with wrong arity of ~w instead of ~w",
+            [length(Args), Arity]), format_stacktrace(StackTrace)];
+format_reason_verbose({{badfun, Term}, [_MFA|_] = StackTrace}) ->
+    ["bad function ", print_val(Term), format_stacktrace(StackTrace)];
+format_reason_verbose({Reason, [{M, F, A}|_] = StackTrace}) when is_atom(M), is_atom(F), is_integer(A) ->
+    [format_reason(Reason), format_stacktrace(StackTrace)];
+format_reason_verbose({Reason, [{M, F, A, Props}|_] = StackTrace}) when is_atom(M), is_atom(F), is_integer(A), is_list(Props) ->
+    %% line numbers
+    [format_reason(Reason), format_stacktrace(StackTrace)];
+format_reason_verbose(Reason) ->
+    format_reason(Reason).
+
 format_mfa({M, F, A}) when is_list(A) ->
     {FmtStr, Args} = format_args(A, [], []),
     io_lib:format("~w:~w("++FmtStr++")", [M, F | Args]);
@@ -424,3 +458,12 @@ get_value(Key, List, Default) ->
 
 supervisor_name({local, Name}) -> Name;
 supervisor_name(Name) -> Name.
+
+format_stacktrace([{gen_server,terminate,6,_},_]) -> [];
+format_stacktrace(StackTrace) ->
+    PF = fun(Term, I) -> io_lib:print(Term, I, 80, 5) end,
+    SF = fun(_M, _F, _A) -> false end,
+    case lib:format_stacktrace(3, StackTrace, SF, PF) of
+        [] -> [];
+        Stack -> [$\n, Stack]
+    end.
