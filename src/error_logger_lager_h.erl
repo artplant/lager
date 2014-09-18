@@ -181,8 +181,21 @@ log_event(Event, State) ->
                             StackTrace = lists:last(Tail),
                             ?LOGFMT(error, Pid,
                                 "Cowboy handler ~p terminated in ~p:~p/~p with reason: ~s",
-                                [Module, Module, Function, Arity, format_reason({Reason, StackTrace})])
+                                [Module, Module, Function, Arity, format_reason_verbose({Reason, StackTrace})])
                     end;
+                "Ranch listener "++_ ->
+                    %% Ranch errors
+                    ?CRASH_LOG(Event),
+                    case Args of
+                        [Ref, _Protocol, Worker, {[{reason, Reason}, {mfa, {Module, Function, Arity}}, {stacktrace, StackTrace} | _], _}] ->
+                            ?LOGFMT(error, Worker,
+                                "Ranch listener ~p terminated in ~p:~p/~p with reason: ~s",
+                                [Ref, Module, Function, Arity, format_reason_verbose({Reason, StackTrace})]);
+                        [Ref, _Protocol, Worker, Reason] ->
+                            ?LOGFMT(error, Worker,
+                                "Ranch listener ~p terminated with reason: ~s",
+                                [Ref, format_reason_verbose(Reason)])
+                    end;                
                 "webmachine error"++_ ->
                     %% Webmachine HTTP server error
                     ?CRASH_LOG(Event),
