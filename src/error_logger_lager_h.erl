@@ -191,6 +191,10 @@ log_event(Event, State) ->
                             ?LOGFMT(error, Worker,
                                 "Ranch listener ~p terminated in ~p:~p/~p with reason: ~s",
                                 [Ref, Module, Function, Arity, format_reason_verbose({Reason, StackTrace})]);
+                        [Ref, _Protocol, Worker, {{nocatch, [{reason, Reason}, {mfa, {Module, Function, Arity}}, {stacktrace, StackTrace} | _]}, _}] ->
+                            ?LOGFMT(error, Worker,
+                                "Ranch listener ~p terminated in ~p:~p/~p with reason: ~s",
+                                [Ref, Module, Function, Arity, format_reason_verbose({Reason, StackTrace})]);
                         [Ref, _Protocol, Worker, Reason] ->
                             ?LOGFMT(error, Worker,
                                 "Ranch listener ~p terminated with reason: ~s",
