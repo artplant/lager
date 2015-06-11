@@ -39,10 +39,16 @@ bounce() ->
     bounce(error).
 
 bounce(Level) ->
-    application:stop(lager),
-    lager:start(),
-    gen_event:add_handler(lager_event, lager_common_test_backend, [Level, false]),
-    %lager:set_loglevel(lager_common_test_backend, Level),
+    _ = application:stop(lager),
+    application:set_env(lager, suppress_application_start_stop, true),
+    application:set_env(lager, handlers,
+                        [
+                         {lager_common_test_backend, [Level, false]}
+                        ]),
+    ok = lager:start(),
+    %% we care more about getting all of our messages here than being
+    %% careful with the amount of memory that we're using.
+    error_logger_lager_h:set_high_water(100000),
     ok.
 
 -spec(init(integer()|atom()|[term()]) -> {ok, #state{}} | {error, atom()}).
@@ -88,7 +94,7 @@ handle_call(get_loglevel, #state{level=Level} = State) ->
 handle_call({set_loglevel, Level}, State) ->
     case lists:member(Level, ?LEVELS) of
         true ->
-            {ok, ok, State#state{level=lager_util:level_to_num(Level)}};
+            {ok, ok, State#state{level=lager_util:config_to_mask(Level)}};
         _ ->
             {ok, {error, bad_log_level}, State}
     end;
