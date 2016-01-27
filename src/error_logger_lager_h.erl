@@ -380,6 +380,8 @@ format_reason({noproc, MFA}) ->
     ["no such process or port in call to ", format_mfa(MFA)];
 format_reason({{badfun, Term}, [MFA|_]}) ->
     ["bad function ", print_val(Term), " in ", format_mfa(MFA)];
+format_reason({{badkey, Key}, [MFA|_]}) ->
+    ["bad key ", print_val(Key), " in ", format_mfa(MFA)];
 format_reason({Reason, [{M, F, A}|_]}) when is_atom(M), is_atom(F), is_integer(A) ->
     [format_reason(Reason), " in ", format_mfa({M, F, A})];
 format_reason({Reason, [{M, F, A, Props}|_]}) when is_atom(M), is_atom(F), is_integer(A), is_list(Props) ->
@@ -415,6 +417,8 @@ format_reason_verbose({{badarity, {Fun, Args}}, [_MFA|_] = StackTrace}) ->
             [length(Args), Arity]), format_stacktrace(StackTrace)];
 format_reason_verbose({{badfun, Term}, [_MFA|_] = StackTrace}) ->
     ["bad function ", print_val(Term), format_stacktrace(StackTrace)];
+format_reason_verbose({{badkey, Term}, [_MFA|_] = StackTrace}) ->
+    ["bad key ", print_val(Term), " in ", format_stacktrace(StackTrace)];
 format_reason_verbose({Reason, [{M, F, A}|_] = StackTrace}) when is_atom(M), is_atom(F), is_integer(A) ->
     [format_reason(Reason), format_stacktrace(StackTrace)];
 format_reason_verbose({Reason, [{M, F, A, Props}|_] = StackTrace}) when is_atom(M), is_atom(F), is_integer(A), is_list(Props) ->
